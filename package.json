@@ -1,0 +1,18 @@
+{
+  "name": "electricnerdz-pipeline-builder",
+  "version": "1.0.0",
+  "private": false,
+  "license": "MIT",
+  "description": "The Pipeline Builder — an always-on AI prospecting agent. Finds leads, drafts personalized outreach with Claude, and sends only what you approve. By Electric Nerdz.",
+  "homepage": "https://electricnerdz.biz",
+  "scripts": {
+    "test": "cd agent-lab && node --test",
+    "smtp:check": "node --env-file=.env.local agent-lab/smtp-check.js"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.14"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

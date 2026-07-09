@@ -1,0 +1,10 @@
+{
+  "name": "meeting-follow-up",
+  "title": "Meeting Follow-Up Agent",
+  "lane": "systems",
+  "description": "Turns messy meeting notes into a follow-up email, task list, open questions, and a decision log.",
+  "reads": ["Notes / transcripts"],
+  "creates": ["Follow-up email", "Task list", "Open questions", "Decision log"],
+  "stopSigns": ["Does not send without approval"],
+  "version": "0.1.0"
+}
