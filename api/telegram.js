@@ -60,10 +60,17 @@ const INTENT_SCHEMA = {
         "resume",
         "set_target",
         "status",
+        "meeting_followup",
+        "lead_truth",
         "help",
         "unknown",
       ],
       description: "The single action the owner's message maps to.",
+    },
+    notes: {
+      type: "string",
+      description:
+        "For meeting_followup: the raw meeting notes from the message (everything that describes the meeting).",
     },
     niche: {
       type: "string",
@@ -105,6 +112,8 @@ const INTENT_SYSTEM = `You route a small-business owner's plain-English text to 
 - resume: turn the daily runs back on ("resume", "turn it back on", "start it again").
 - set_target: set the default city/niche the DAILY run uses going forward. Extract niche + city ("target dentists in KC going forward", "focus on roofers in Dallas").
 - status: an overview ("status", "how's it going", "what's set up").
+- meeting_followup: they paste meeting notes and want a follow-up drafted ("follow up on this meeting: ...", "draft the recap: ...", any message that reads like meeting notes with commitments). Put the full notes text in "notes".
+- lead_truth: judge the new inbound leads honestly ("run lead truth", "check my new leads", "are these leads any good", "triage the leads").
 - help: they ask what they can do.
 - unknown: unrelated.
 
@@ -250,8 +259,10 @@ async function sendHelp(chatId) {
       `• <i>“send them all”</i> / <i>“skip that one”</i>\n` +
       `• <i>“pause the daily emails”</i> / <i>“turn it back on”</i>\n` +
       `• <i>“target roofers in Dallas going forward”</i>\n` +
-      `• <i>“status”</i>\n\n` +
-      `Shortcuts: <code>/run</code> <code>/leads niche | city</code> <code>/list</code> <code>/signups</code> <code>/replies</code> <code>/pending</code> <code>/pause</code> <code>/resume</code> <code>/status</code>`
+      `• <i>“status”</i>\n` +
+      `• Paste meeting notes: <i>“follow up on this meeting: …”</i> (include their email)\n` +
+      `• <i>“check my new leads”</i> — Lead Truth judges them honestly\n\n` +
+      `Shortcuts: <code>/run</code> <code>/leads niche | city</code> <code>/list</code> <code>/signups</code> <code>/replies</code> <code>/pending</code> <code>/pause</code> <code>/resume</code> <code>/status</code> <code>/meeting &lt;notes&gt;</code> <code>/leadtruth</code>`
   );
 }
 
@@ -353,6 +364,66 @@ async function actCheckReplies(chatId, req) {
   // If replies were found, /api/check-replies already sent the hot-reply alert.
 }
 
+// ---- The shared agent layer (meeting-follow-up, lead-truth) ----------------
+
+async function runAgentEndpoint(req, payload) {
+  const r = await fetch(`${baseUrl(req)}/api/agent-run?secret=${encodeURIComponent(cronSecret())}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return r.json().catch(() => ({}));
+}
+
+async function actMeeting(chatId, req, notes) {
+  const text = String(notes || "").trim();
+  if (text.length < 20) {
+    await sendMessage(
+      chatId,
+      "📝 Paste the meeting notes after the command — e.g.\n<i>/meeting Kickoff with Dana dana@acme.com — she wants the no-show fix, we send SOW Friday…</i>\n\nInclude the recipient's <b>email address</b> anywhere in the notes so I know where the follow-up goes."
+    );
+    return;
+  }
+  // Recipients = any email addresses found in the notes.
+  const emails = [...new Set(text.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) || [])];
+  if (!emails.length) {
+    await sendMessage(
+      chatId,
+      "✋ I don't see an email address in those notes, so I'd have nowhere to send the follow-up. Add the recipient's email anywhere in the text and resend."
+    );
+    return;
+  }
+  const title = text.split("\n")[0].slice(0, 60);
+  await sendMessage(chatId, `✍️ <b>Drafting the follow-up…</b> (to: ${tgEscape(emails.join(", "))})  It'll arrive here with Approve / Reject links.`);
+  const j = await runAgentEndpoint(req, {
+    agent: "meeting-follow-up",
+    items: [{ id: `mtg_${Date.now()}`, title, attendees: [], attendee_emails: emails, notes: text }],
+  });
+  if (!j || !j.ok) {
+    await sendMessage(chatId, `⚠️ Couldn't run it: ${tgEscape((j && j.error) || "unknown error")}`);
+  }
+}
+
+async function actLeadTruth(chatId, req) {
+  await sendMessage(chatId, "🔍 <b>Judging your new leads…</b>  Real ones arrive here as drafts; junk gets skipped with reasons logged.");
+  const j = await runAgentEndpoint(req, { agent: "lead-truth" });
+  if (!j || !j.ok) {
+    const msg = (j && j.error) || "unknown error";
+    if (/no matching rows/i.test(msg)) {
+      await sendMessage(chatId, "📭 No new leads to judge — nothing in the table with status <b>new</b>.");
+    } else {
+      await sendMessage(chatId, `⚠️ Couldn't run it: ${tgEscape(msg)}`);
+    }
+    return;
+  }
+  const drafted = j.pendingApprovals || 0;
+  const judged = j.items || 0;
+  await sendMessage(
+    chatId,
+    `⚖️ <b>Judged ${judged} lead${judged === 1 ? "" : "s"}.</b>  ${drafted} worth a reply — draft${drafted === 1 ? "" : "s"} incoming with Approve links. ${judged - drafted} skipped (reasons in the log).`
+  );
+}
+
 async function routeIntent(chatId, req, intent) {
   switch (intent.action) {
     case "run":
@@ -381,6 +452,10 @@ async function routeIntent(chatId, req, intent) {
       return actSetTarget(chatId, intent.niche, intent.city);
     case "status":
       return actStatus(chatId);
+    case "meeting_followup":
+      return actMeeting(chatId, req, intent.notes);
+    case "lead_truth":
+      return actLeadTruth(chatId, req);
     case "help":
       return sendHelp(chatId);
     default:
@@ -475,6 +550,8 @@ module.exports = async function handler(req, res) {
         else if (/^\/pause\b/i.test(text)) await actPause(chatId);
         else if (/^\/resume\b/i.test(text)) await actResume(chatId);
         else if (/^\/status\b/i.test(text)) await actStatus(chatId);
+        else if (/^\/meeting\b/i.test(text)) await actMeeting(chatId, req, text.replace(/^\/meeting\b/i, "").trim());
+        else if (/^\/(leadtruth|truth)\b/i.test(text)) await actLeadTruth(chatId, req);
         else await sendHelp(chatId);
         return done();
       }

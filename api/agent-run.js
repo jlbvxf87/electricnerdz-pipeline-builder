@@ -24,13 +24,19 @@ const AGENTS = {
   },
   "lead-truth": {
     load: () => require("../agent-lab/agents/lead-truth/agent"),
-    // No items posted? Read new leads from our own Supabase table.
+    // No items posted? Read UNASSESSED leads from our own Supabase table.
     defaultItems: async (body) => {
       const { fetchLeads } = require("../agent-lab/packages/connectors/leads-table");
       return fetchLeads({
         status: body.status || "new",
         limit: Number(body.limit) || 20,
       });
+    },
+    // Idempotency: stamp every judged lead with the verdict + honest score so
+    // the next run (manual, Telegram, or cron) never re-drafts the same lead.
+    afterRun: async (run) => {
+      const { markLeadsAssessed } = require("../agent-lab/packages/connectors/leads-table");
+      return markLeadsAssessed(run.results);
     },
   },
 };
@@ -98,12 +104,23 @@ module.exports = async function handler(req, res) {
       notified.push({ approvalId: r.approval.id, ...n });
     }
 
+    // Agent-specific post-run bookkeeping (e.g. lead-truth marks leads assessed).
+    let marked;
+    if (entry.afterRun) {
+      try {
+        marked = await entry.afterRun(run);
+      } catch (e) {
+        console.log(`[agent-run] afterRun failed for ${name}:`, e && e.message);
+      }
+    }
+
     return json(res, 200, {
       ok: true,
       runId: run.runId,
       agent: name,
       items: run.count,
       pendingApprovals: notified.length,
+      ...(marked ? { markedAssessed: marked.length } : {}),
       notified,
     });
   } catch (err) {
