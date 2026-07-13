@@ -38,14 +38,23 @@ async function decide(item, ctx) {
 }
 
 // DRAFT/ACT: assemble the proposed action. Nothing is sent here.
-async function act(item, decision) {
+// `to` must be real email addresses (item.attendee_emails) — attendee display
+// names are kept separately for the approval UI. This is a warm, relationship
+// email to people who were in the meeting (not commercial cold outreach), so
+// it is compliance-cleared by construction — but ONLY when there's at least
+// one valid recipient address. The human-approval stop sign still applies.
+async function act(item, decision, ctx) {
+  const to = (item.attendee_emails || []).filter((e) => /\S+@\S+\.\S+/.test(e));
   return {
     kind: "send_email",
-    to: item.attendees || [],
+    from: (ctx && ctx.config && ctx.config.senderEmail) || undefined,
+    to,
+    attendees: item.attendees || [],
     draft: decision.followUpEmail,
     tasks: decision.tasks || [],
     openQuestions: decision.openQuestions || [],
     decisions: decision.decisions || [],
+    cleared: to.length > 0, // deliver.js hard gate: no recipients -> never sends
     sent: false, // stays false until a human approves and a sender acts
   };
 }

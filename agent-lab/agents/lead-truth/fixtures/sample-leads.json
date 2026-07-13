@@ -1,0 +1,49 @@
+{
+  "items": [
+    {
+      "id": "lead_001",
+      "created_at": "2026-07-11T15:20:00Z",
+      "status": "new",
+      "source": "landing_page",
+      "nerd_type": "systems",
+      "business_type": "Local service business",
+      "primary_issue": "Manual admin is too heavy: Every new client inquiry requires manually entering contact info into our CRM, creating a follow-up task, and sending a welcome email — all done by hand, taking about 30 minutes per lead.",
+      "goal": "Cut admin time so I can take more jobs",
+      "contact_email": "owner@brightpath-plumbing.example",
+      "zip": "64111",
+      "score": 87,
+      "estimated_monthly_loss": 10900,
+      "leaks": ["manual data entry", "slow follow-up", "no welcome sequence"]
+    },
+    {
+      "id": "lead_002",
+      "created_at": "2026-07-10T09:05:00Z",
+      "status": "new",
+      "source": "landing_page",
+      "nerd_type": "systems",
+      "business_type": "Local service business",
+      "primary_issue": "Manual admin is too heavy: i love ai",
+      "goal": "grow",
+      "contact_email": "mike@example.com",
+      "zip": "64108",
+      "score": 72,
+      "estimated_monthly_loss": 9200,
+      "leaks": ["unknown", "unknown", "unknown"]
+    },
+    {
+      "id": "lead_003",
+      "created_at": "2026-07-09T22:41:00Z",
+      "status": "new",
+      "source": "landing_page",
+      "nerd_type": "diagnostic",
+      "business_type": "Local service business",
+      "primary_issue": "Find the bottleneck: Testing the lead form to verify email delivery is working correctly.",
+      "goal": "test",
+      "contact_email": "test@electricnerdz.biz",
+      "zip": "00000",
+      "score": 63,
+      "estimated_monthly_loss": 8100,
+      "leaks": ["test", "test", "test"]
+    }
+  ]
+}

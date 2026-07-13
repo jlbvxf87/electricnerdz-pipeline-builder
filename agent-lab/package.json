@@ -5,7 +5,7 @@
   "description": "Electric Nerdz action agents — the runtime + agent library.",
   "scripts": {
     "test": "node --test",
-    "run:meeting": "node run.js",
+    "run:meeting": "node --env-file=.env.local run.js",
     "smtp:check": "node --env-file=.env.local smtp-check.js"
   },
   "dependencies": {

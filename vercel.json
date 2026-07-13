@@ -1,6 +1,17 @@
 {
   "crons": [
-    { "path": "/api/morning-prompt", "schedule": "0 13 * * 1-5" },
-    { "path": "/api/check-replies", "schedule": "30 13 * * 1-5" }
-  ]
+    {
+      "path": "/api/morning-prompt",
+      "schedule": "0 13 * * 1-5"
+    },
+    {
+      "path": "/api/check-replies",
+      "schedule": "30 13 * * 1-5"
+    }
+  ],
+  "functions": {
+    "api/agent-run.js": {
+      "includeFiles": "agent-lab/agents/**/prompt.md"
+    }
+  }
 }

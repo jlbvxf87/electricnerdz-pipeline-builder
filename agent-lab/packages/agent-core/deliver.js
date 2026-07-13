@@ -4,13 +4,19 @@
 // by approving.
 
 async function approveAndSend({ store, approvalId, sender }) {
-  const approvals = await store.listApprovals({});
-  const approval = approvals.find((a) => a.id === approvalId);
+  const approval =
+    typeof store.getApproval === "function"
+      ? await store.getApproval(approvalId)
+      : (await store.listApprovals({})).find((a) => a.id === approvalId);
   if (!approval) throw new Error(`approval ${approvalId} not found`);
 
   // Idempotency: never send twice.
   if (approval.status === "sent") {
     return { ok: true, alreadySent: true };
+  }
+  // A rejected approval can never be sent afterward.
+  if (approval.status === "rejected") {
+    return { ok: false, reason: "rejected" };
   }
 
   const action = approval.action || {};
@@ -23,6 +29,13 @@ async function approveAndSend({ store, approvalId, sender }) {
       reason: "not_compliant",
       violations: (action.compliance && action.compliance.violations) || [],
     };
+  }
+
+  // Hard gate: a send action must have at least one recipient address.
+  const recipients = Array.isArray(action.to) ? action.to : [action.to].filter(Boolean);
+  if (recipients.length === 0) {
+    await store.setApprovalStatus(approvalId, "blocked");
+    return { ok: false, reason: "no_recipient", violations: [] };
   }
 
   const message = {

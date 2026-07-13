@@ -65,8 +65,8 @@ async function runAgent(agent, ctx) {
       agent: name,
       step: "log",
       itemId,
-      decisionSummary: decision.summary || null,
-      actionKind: action.kind || null,
+      decisionSummary: (decision && decision.summary) || null,
+      actionKind: (action && action.kind) || null,
       gated,
     });
 

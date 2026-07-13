@@ -1,0 +1,8 @@
+{
+  "name": "lead-truth",
+  "title": "Lead Truth Agent",
+  "job": "Checks whether leads are actually worth following up with — not just whether a platform says they converted.",
+  "reads": ["Lead forms, notes, source, campaign, CRM status"],
+  "creates": ["Quality score", "Follow-up draft", "Next step", "Log"],
+  "stopSigns": ["Does not send without approval"]
+}

@@ -41,15 +41,35 @@ Every Electric Nerdz agent follows the same recipe:
 | Resend | Owner alerts + warm mail |
 | Telegram (optional) | Tap-to-approve from your phone |
 
+## The agent library
+
+Pipeline Builder is one of a growing library of action agents that all share the
+same runtime, the same approval layer, and the same stop signs:
+
+| Agent | Chore | Status |
+| --- | --- | --- |
+| **Pipeline Builder** (`agents/pipeline-builder/`) | Finds leads, drafts personalized outreach, sends only what you approve | Live |
+| **Meeting Follow-Up** (`agents/meeting-follow-up/`) | Turns meeting notes into a follow-up email, task list, and decision log | Live |
+| **Lead Truth** (`agents/lead-truth/`) | Judges whether inbound leads are actually worth your time — not just what a platform score claims — and drafts replies for the real ones | Live |
+
+Every agent is the same five-step shape (`Read → Decide → Act → Approve → Log`)
+run by one shared loop, and **nothing sends without a human tap on Approve** —
+delivered to your email and Telegram as one-click links. `agent-lab/README.md`
+documents how to build the next one.
+
 ## Layout
 
 ```
 agent-lab/                 the tested runtime + agents (no build step, no deps to run tests)
-  packages/agent-core/     Read → Decide → Act → Approve → Log loop, senders, store
-  packages/connectors/     Google Places + email extractor + lead finder
+  packages/agent-core/     Read → Decide → Act → Approve → Log loop, llm, senders,
+                           memory + Supabase stores, notify (email/Telegram), deliver
+  packages/connectors/     Google Places, email extractor, lead finder, leads table
   agents/pipeline-builder/ manifest, prompt, schema, eligibility, compliance, fixtures, tests
+  agents/meeting-follow-up/  the reference agent — notes in, gated follow-up out
+  agents/lead-truth/       honest lead-quality verdicts + gated follow-up drafts
 lib/                       pipeline.js (draft logic), pipeline-db.js (Supabase), telegram.js
 api/                       Vercel endpoints: leads-find, pipeline-run, pipeline-approve,
+                           agent-run, agent-approve, agent-reject (the shared layer),
                            check-replies, morning-prompt, telegram (webhook)
 supabase/                  SQL migrations (run these once)
 ```

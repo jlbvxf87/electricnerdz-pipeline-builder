@@ -5,6 +5,7 @@
       "title": "Acme HVAC — install kickoff",
       "date": "2026-07-06",
       "attendees": ["Dana (Acme)", "Marco (EN)"],
+      "attendee_emails": ["dana@acmehvac.example", "marco@electricnerdz.biz"],
       "notes": "acme getting killed on missed calls after hours, leads go to voicemail and nobody calls back til next day. wants the no-show recovery thing + something for the missed leads. uses housecall pro for scheduling, leads come thru a wix form + google ads. marco said start small, one agent, starter install 750. dana asked if it can text customers - yes but only after she approves the message. need her google ads access to see spend. dana out next week, pick back up the 20th. marco to send SOW by friday. agreed no auto-texting without approval, ever."
     },
     {
@@ -12,6 +13,7 @@
       "title": "Riverside Dental — weekly ops sync",
       "date": "2026-07-07",
       "attendees": ["Priya (Riverside)", "Sam (EN)"],
+      "attendee_emails": ["priya@riversidedental.example", "sam@electricnerdz.biz"],
       "notes": "front desk drowning in reminder calls. wants weekly report of no-shows + a reminder agent. they use dentrix. priya not sure if dentrix has an api - open question. sam to check. budget maybe pro install range but priya needs to ask the owner. next check-in thursday."
     }
   ]

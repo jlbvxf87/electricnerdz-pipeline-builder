@@ -73,9 +73,12 @@ approval. That is the stop sign, enforced by the runtime, not by trust.
 Copy `agents/meeting-follow-up/`, then for the new chore edit: `manifest.json`
 (the card), `prompt.md` (the instructions), `schema.js` (the output shape),
 `agent.js` (read/act + which actions need approval), and `fixtures/` (fake data
-to test with). The remaining five from the site — Lead Truth, Ad Spend Guardian,
-No-Show Recovery, Review Request, Weekly Operator Report — each drop into this
-same shape.
+to test with). Lead Truth (`agents/lead-truth/`) is the second agent built this
+way — it reads the site's own Supabase `leads` table via
+`packages/connectors/leads-table.js`, gives an honest quality verdict (treating
+the quiz score as a claim, not truth), and drafts approval-gated follow-ups.
+The remaining four from the site — Ad Spend Guardian, No-Show Recovery,
+Review Request, Weekly Operator Report — each drop into this same shape.
 
 ## From here to production
 

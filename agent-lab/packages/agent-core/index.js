@@ -2,6 +2,8 @@
 module.exports = {
   ...require("./runner"),
   ...require("./store"),
+  ...require("./store-supabase"),
+  ...require("./notify"),
   ...require("./llm"),
   ...require("./senders"),
   ...require("./deliver"),
